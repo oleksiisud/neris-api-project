@@ -1,0 +1,53 @@
+:root {
+  --black: #0a0a0a;
+  --navy: #0d1b2a;
+  --navy-mid: #1a2e45;
+  --navy-light: #243b55;
+  --red: #c0392b;
+  --red-bright: #e74c3c;
+  --orange: #e67e22;
+  --orange-bright: #f39c12;
+  --amber: #f1c40f;
+  --white: #f0f0f0;
+  --gray: #8a9ab0;
+  --gray-dark: #3d4f63;
+  --success: #27ae60;
+  --success-dim: #1e8449;
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--orange);
+  border-radius: 3px;
+}
+
+::selection {
+  background: var(--orange);
+  color: var(--black);
+}

@@ -5,7 +5,7 @@
 
 ---
 
-## Frontend link: [NERIS API PROJECT FRONTEND](neris-api-proj.vercel.app)
+## Frontend link: [NERIS FRONTEND LINK](https://neris-api-proj.vercel.app/)
 
 ## Overview
 

@@ -1,0 +1,6 @@
+fastapi==0.111.0
+uvicorn==0.30.0
+redis==5.0.1
+rq==1.15.1
+pydantic==2.7.1
+orjson==3.10.3

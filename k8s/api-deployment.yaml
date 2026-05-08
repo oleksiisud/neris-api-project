@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: validation-api
+  namespace: neris-ai
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: validation-api
+  template:
+    metadata:
+      labels:
+        app: validation-api
+    spec:
+      containers:
+      - name: api
+        image: 103524369203.dkr.ecr.us-east-1.amazonaws.com/neris-api:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: neris-secrets

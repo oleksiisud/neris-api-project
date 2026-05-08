@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: validation-worker
+  namespace: neris-ai
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: validation-worker
+  template:
+    metadata:
+      labels:
+        app: validation-worker
+    spec:
+      containers:
+      - name: worker
+        image: 103524369203.dkr.ecr.us-east-1.amazonaws.com/neris-worker:latest
+        envFrom:
+        - secretRef:
+            name: neris-secrets

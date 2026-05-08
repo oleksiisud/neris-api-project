@@ -1,0 +1,18 @@
+root ::= root-object
+
+root-object ::= "{" ws "\"changes\"" ws ":" ws array ws "}"
+
+array ::= "[" ws (change (ws "," ws change)*)? ws "]"
+
+change ::= "{" ws "\"field\"" ws ":" ws string ws "," ws "\"comment\"" ws ":" ws string ws "," ws "\"proposed_field\"" ws ":" ws proposed-field-obj ws "," ws "\"confidence_scores\"" ws ":" ws confidence-scores-obj ws "}"
+
+proposed-field-obj ::= "{" ws string ws ":" ws value ws "}"
+
+confidence-scores-obj ::= "{" ws "\"incorrectness_confidence\"" ws ":" ws integer ws "," ws "\"fix_confidence\"" ws ":" ws integer ws "," ws "\"narrative_clarity\"" ws ":" ws integer ws "}"
+
+value ::= string | integer | "true" | "false" | "null"
+
+string ::= "\"" char* "\""
+char ::= [^"\\\x00-\x1F] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F])
+integer ::= "-"? [0-9]+
+ws ::= [ \t\n\r]*

@@ -10,6 +10,7 @@ k8s/
 ├── api-deployment.yaml
 ├── api-service.yaml
 ├── worker-deployment.yaml
+├── llm-pvc.yaml
 ├── llm-deployment.yaml
 ├── llm-service.yaml
 ├── ingress.yaml
@@ -22,11 +23,12 @@ k8s/
 Recommended deployment order:
 1. namespace
 2. secrets
-3. llm deployment/service
-4. worker deployment
-5. api deployment/service
-6. ingress
-7. autoscaling
+3. llm pvc
+4. llm deployment/service
+5. worker deployment
+6. api deployment/service
+7. ingress
+8. autoscaling
 
 ## Apply Manifests
 

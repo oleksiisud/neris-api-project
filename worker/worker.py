@@ -13,19 +13,15 @@ logging.basicConfig(level=logging.INFO)
 
 redis_conn = Redis(
     host=REDIS_HOST,
-    port=REDIS_PORT,
-    decode_responses=True
+    port=REDIS_PORT
 )
 
 
 def build_fix_prompt(bad_output: str) -> str:
     return f"""
 Your JSON output failed validation.
-
 Fix ONLY the JSON formatting.
-
 Return valid JSON only.
-
 Bad Output:
 {bad_output}
 """
@@ -40,32 +36,32 @@ async def process_validation_job(job_data: dict):
     }
     """
 
-    prompt = job_data["prompt"]
+    original_prompt = job_data["prompt"]
+    prompt = original_prompt
 
     retries = 0
-
+    raw_output = ""
     while retries <= MAX_RETRIES:
 
         try:
             logging.info(f"Calling LLM (attempt {retries + 1})")
-
             raw_output = await call_llm(prompt)
-
             validated = validate_response(raw_output)
-
             logging.info("Validation successful")
 
             return validated.model_dump()
 
         except Exception as e:
             logging.exception("Validation failed")
-
             retries += 1
-
             if retries > MAX_RETRIES:
                 raise
 
-            prompt = build_fix_prompt(raw_output)
+            if raw_output.strip():
+                prompt = build_fix_prompt(raw_output)
+            else:
+                logging.warning("Empty LLM response — retrying with original prompt")
+                prompt = original_prompt
 
 
 def sync_process_validation_job(job_data: dict):

@@ -14,7 +14,7 @@ Responsibilities:
 ```text
 worker/
 ├── worker.py
-├── queue.py
+├── queue_service.py
 ├── llm_client.py
 ├── validator.py
 ├── models.py

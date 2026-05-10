@@ -1,27 +1,45 @@
-version: "3.9"
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: validation-api-hpa
+  namespace: neris-ai
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: validation-api
 
-services:
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-  api:
-    build: ./api
-    ports:
-      - "8000:8000"
-    environment:
-      REDIS_HOST: redis
-    depends_on:
-      - redis
-  worker:
-    build: ./worker
-    environment:
-      REDIS_HOST: redis
-      LLM_URL: http://llm:8080/completion
-    depends_on:
-      - redis
-      - llm
-  llm:
-    build: ./llm
-    ports:
-      - "8080:8080"
+  minReplicas: 2
+  maxReplicas: 6
+
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: validation-worker-hpa
+  namespace: neris-ai
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: validation-worker
+
+  minReplicas: 1
+  maxReplicas: 8
+
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75

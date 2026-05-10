@@ -9,7 +9,7 @@ async def call_llm(prompt: str) -> str:
         "prompt": prompt,
         "temperature": 0.1,
         "top_p": 0.9,
-        "max_tokens": 512,
+        "max_tokens": 1024,
         "stop": ["</s>"]
     }
 
@@ -23,4 +23,4 @@ async def call_llm(prompt: str) -> str:
 
         data = response.json()
 
-        return data["content"]
+        return data["content"].strip()

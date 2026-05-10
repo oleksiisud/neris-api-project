@@ -1,18 +1,17 @@
-root ::= root-object
+root   ::= audit
+audit  ::= "{" ws "\"status\"" ws ":" ws status ws "," ws "\"issues\"" ws ":" ws issues ws "}"
 
-root-object ::= "{" ws "\"changes\"" ws ":" ws array ws "}"
+status ::= "\"VALID\"" | "\"INVALID\""
 
-array ::= "[" ws (change (ws "," ws change)*)? ws "]"
+issues ::= "[]" | "[" ws issue ("," ws issue)* ws "]"
 
-change ::= "{" ws "\"field\"" ws ":" ws string ws "," ws "\"comment\"" ws ":" ws string ws "," ws "\"proposed_field\"" ws ":" ws proposed-field-obj ws "," ws "\"confidence_scores\"" ws ":" ws confidence-scores-obj ws "}"
+issue  ::= "{" ws "\"field_path\"" ws ":" ws string ws "," ws "\"current_value\"" ws ":" ws value  ws "," ws "\"narrative_source\"" ws ":" ws string ws "," ws "\"narrative_excerpt\"" ws ":" ws string ws "," ws "\"severity\"" ws ":" ws severity ws "," ws "\"suggested_correction\"" ws ":" ws string ws "}"
 
-proposed-field-obj ::= "{" ws string ws ":" ws value ws "}"
+severity ::= "\"HIGH\"" | "\"MEDIUM\"" | "\"LOW\""
 
-confidence-scores-obj ::= "{" ws "\"incorrectness_confidence\"" ws ":" ws integer ws "," ws "\"fix_confidence\"" ws ":" ws integer ws "," ws "\"narrative_clarity\"" ws ":" ws integer ws "}"
-
-value ::= string | integer | "true" | "false" | "null"
-
-string ::= "\"" char* "\""
-char ::= [^"\\\x00-\x1F] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F])
-integer ::= "-"? [0-9]+
-ws ::= [ \t\n\r]*
+value ::= string | number | "true" | "false" | "null" | array | object
+array ::= "[]" | "[" ws value ("," ws value)* ws "]"
+object ::= "{}" | "{" ws string ws ":" ws value ("," ws string ws ":" ws value)* ws "}"
+number ::= "-"? [0-9]+ ("." [0-9]+)?
+string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4}))* "\""
+ws ::= [ \t\n]*

@@ -4,22 +4,24 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     cmake \
-    curl
+    curl \
+    libcurl4-openssl-dev \
+    pkg-config
 
 WORKDIR /app
 
-RUN git clone https://github.com/ggerganov/llama.cpp.git
+RUN git clone --depth 1 https://github.com/ggerganov/llama.cpp.git
 
-WORKDIR /app/llama.cpp
+WORKDIR /app/llama.cpp/build
 
-RUN make -j4
+RUN cmake .. -DLLAMA_CURL=ON && \
+    cmake --build . --config Release -j4
 
-COPY models ./models
-COPY grammars ./grammars
-COPY start.sh .
+COPY grammars /app/grammars
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
-RUN chmod +x start.sh
-
+WORKDIR /app
 EXPOSE 8080
 
-CMD ["bash", "start.sh"]
+CMD ["./start.sh"]

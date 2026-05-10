@@ -25,9 +25,25 @@ spec:
           limits:
             cpu: "4"
             memory: "8Gi"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /app/models
+          readOnly: true
         readinessProbe:
           httpGet:
             path: /health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          failureThreshold: 3
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: llm-model-pvc

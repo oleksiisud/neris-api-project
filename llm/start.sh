@@ -1,8 +1,7 @@
 #!/bin/bash
 
-#placeholder for the actual model path
-./server \
-  -m ./models/model.gguf \
+./llama.cpp/build/bin/llama-server \
+  -m ./models/llama-neris.Q4_K_M.gguf \
   -c 4096 \
   -t 4 \
   --host 0.0.0.0 \

@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: narrative-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - narrative-network
+
+  api:
+    build:
+      context: ./api
+    container_name: narrative-api
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JOB_TIMEOUT=600
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./api:/app
+    networks:
+      - narrative-network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./worker
+    container_name: narrative-worker
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LLM_URL=http://llm:8080/completion
+      - MAX_RETRIES=2
+      - REQUEST_TIMEOUT=120
+      - JOB_TIMEOUT=600
+    depends_on:
+      redis:
+        condition: service_healthy
+      llm:
+        condition: service_healthy
+    volumes:
+      - ./worker:/app
+    networks:
+      - narrative-network
+    restart: unless-stopped
+
+  llm:
+    build:
+      context: ./llm
+    container_name: narrative-llm
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./llm/models:/app/models
+      - ./llm/grammars:/app/grammars
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - narrative-network
+    restart: unless-stopped
+
+networks:
+  narrative-network:
+    driver: bridge

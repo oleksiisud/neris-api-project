@@ -62,8 +62,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '4'
-          memory: 8G
+          cpus: '8'
+          memory: 16G
     ports:
       - "8080:8080"
     volumes:

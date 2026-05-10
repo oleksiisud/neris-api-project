@@ -17,6 +17,18 @@ def build_validation_contexts(doc: Dict[str, Any]) -> List[ValidationContext]:
         "dispatch": doc.get("dispatch"),
     }
 
+    contexts.append(
+        ValidationContext(
+            context_type="base_validation",
+            primary_object=base_data,
+            related_objects=[],
+            comments=["Verify base incident information aligns with incident types and dispatch data."],
+            relevant_schema_rules=[
+                "Incident types must be consistent with the documented narrative.",
+            ],
+        )
+    )
+
     if "fire_detail" in doc:
         fire_detail = doc.get("fire_detail") or {}
         narratives = {

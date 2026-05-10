@@ -6,10 +6,26 @@ The system validates structured JSON rows against natural-language comments and 
 
 ## Architecture
 
+The system supports a Hybrid Architecture, allowing for both synchronous and asynchronous inference paths:
+
+### Mode 1 — Synchronous (Default)
+Best for local development, fast responses, and focused validation units.
 ```text
 Client
   ↓
-ALB Ingress
+FastAPI API Service
+  ↓
+Context Builder
+  ↓
+llama.cpp Inference Service
+  ↓
+Llama 3.2 GGUF Model
+```
+
+### Mode 2 — Async (`?mode=async`)
+Best for large batch processing or long-running validation.
+```text
+Client
   ↓
 FastAPI API Service
   ↓

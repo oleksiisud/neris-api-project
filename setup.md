@@ -121,3 +121,78 @@ To avoid unnecessary costs, remember to scale down the node group or delete the 
 ```bash
 eksctl delete cluster --name neris-narrative-validation --region us-east-1
 ```
+
+---
+
+## Cost Reduction Strategies
+
+### 1. Downsize the node type (saves ~$130–160/month)
+
+The K8s `llm-deployment.yaml` only *requests* 4 CPU / 8Gi, not 8 CPU / 16Gi. A `c7i.xlarge` (4 vCPU, 8 GiB) is exactly right and costs roughly half as much as a `c7i.2xlarge`.
+
+Change `--node-type c7i.2xlarge` → `--node-type c7i.xlarge` in the `eksctl create` commands above.
+
+New estimate: **2x c7i.xlarge ≈ $120–160/month**
+
+### 2. Use Spot instances (saves ~60–70% on EC2)
+
+Add `--spot` to the eksctl node group to bid on spare capacity. Spot interruptions are rare for c7i and llama.cpp restarts in seconds.
+
+```bash
+eksctl create nodegroup \
+  --cluster neris-narrative-validation \
+  --name cpu-workers-spot \
+  --node-type c7i.xlarge \
+  --nodes 2 --nodes-min 1 --nodes-max 4 \
+  --managed --spot
+```
+
+Combined with the right-sized instance: **≈ $36–50/month for EC2** instead of $240–320.
+
+### 3. Self-host Redis inside the cluster (saves ~$15–40/month)
+
+The Helm chart already installs Redis as a pod. Skip ElastiCache entirely for non-production use — the in-cluster Redis is sufficient:
+
+```bash
+helm install redis bitnami/redis \
+  --set architecture=standalone \
+  --set auth.enabled=false
+```
+
+Remove any ElastiCache terraform/CDK resources. This alone eliminates the $15–40 line item.
+
+### 4. Replace EFS with EBS for model storage (saves ~$5–15/month)
+
+The `llm-pvc.yaml` uses `storageClassName: efs-sc` (ReadOnlyMany). A single-replica LLM pod only needs `ReadWriteOnce`, so EBS (`gp3`) is cheaper and lower-latency:
+
+```yaml
+# k8s/llm-pvc.yaml
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp3
+  resources:
+    requests:
+      storage: 10Gi
+```
+
+### 5. Scale to zero when the queue is empty (eliminates idle EC2 cost)
+
+Install [KEDA](https://keda.sh/) and add a `ScaledObject` that watches the `validation` Redis list. When the queue depth is 0, KEDA scales the worker and LLM deployments to 0 replicas — the node group autoscaler then terminates the nodes, leaving only the $72 EKS control plane running.
+
+```bash
+helm repo add kedacore https://kedacore.github.io/charts
+helm install keda kedacore/keda --namespace keda --create-namespace
+```
+
+### Revised cost estimate
+
+| Strategy applied | Approx Monthly |
+|-----------------|----------------|
+| Downsize to c7i.xlarge + Spot | ~$36–50 |
+| Self-hosted Redis (no ElastiCache) | $0 |
+| EBS instead of EFS | ~$1–2 |
+| EKS control plane | ~$72 |
+| NAT/VPC | ~$5–15 |
+| **Total (always-on)** | **~$115–140/month** |
+| **Total (KEDA scale-to-zero, light usage)** | **~$75–85/month** |

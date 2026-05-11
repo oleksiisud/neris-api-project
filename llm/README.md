@@ -22,37 +22,44 @@ llm/
 ├── start.sh
 ├── grammars/
 │   └── schema.gbnf
-├── models/
-│   └── llama-3.2-3b-instruct.Q4_K_M.gguf
-└── llama.cpp/
+└── models/
+    └── model.gguf   ← you must place your GGUF file here before running
 ```
 
 ## Model
 
-Recommended starting model:
+Recommended starting model: **Llama 3.2 3B Instruct Q4_K_M**
 
-```text
-Llama 3.2 3B Instruct
+This balances memory usage, latency, and inference quality at ~2GB on disk.
+
+### Downloading the model
+
+Download from Hugging Face using `huggingface-cli` (requires `pip install huggingface_hub`):
+
+```bash
+huggingface-cli download \
+  bartowski/Llama-3.2-3B-Instruct-GGUF \
+  Llama-3.2-3B-Instruct-Q4_K_M.gguf \
+  --local-dir ./llm/models \
+  --local-dir-use-symlinks False
+
+# Rename to the expected filename
+mv llm/models/Llama-3.2-3B-Instruct-Q4_K_M.gguf llm/models/model.gguf
 ```
 
-Recommended quantization:
-
-```text
-Q4_K_M
+Or download manually from:
 ```
-
-This balances:
-- memory usage
-- latency
-- inference quality
+https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF
+```
+and place the file at `llm/models/model.gguf`.
 
 ## llama.cpp Startup
 
-Example:
+The `start.sh` script runs:
 
 ```bash
-./server \
-  -m ./models/llama-3.2-3b-instruct.Q4_K_M.gguf \
+./llama.cpp/build/bin/llama-server \
+  -m ./models/model.gguf \
   -c 4096 \
   -t 4 \
   --host 0.0.0.0 \

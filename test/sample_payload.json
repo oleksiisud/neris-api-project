@@ -1,0 +1,42 @@
+{
+  "base": {
+    "incident_id": "2024-001",
+    "incident_date": "2024-01-15",
+    "outcome_narrative": "Units arrived on scene and found a working structure fire on the second floor. Fire was contained to the room of origin.",
+    "impediment_narrative": "No impediments reported."
+  },
+  "incident_types": [
+    {
+      "type": "STRUCTURE_FIRE",
+      "category": "FIRE"
+    }
+  ],
+  "dispatch": {
+    "disposition": "MITIGATED",
+    "comments": "Fire was contained quickly due to early detection.",
+    "unit_responses": [
+      {
+        "unit_id": "E1",
+        "dispatch_time": "2024-01-15T14:00:00Z",
+        "on_scene_time": "2024-01-15T14:07:00Z",
+        "arrival_condition": "WORKING_FIRE"
+      }
+    ]
+  },
+  "fire_detail": {
+    "room_of_origin": "BEDROOM",
+    "fire_spread": "CONFINED_TO_ROOM"
+  },
+  "smoke_alarm": {
+    "present": true,
+    "operated": true
+  },
+  "fire_alarm": {
+    "present": false
+  },
+  "other_alarm": null,
+  "fire_suppression": {
+    "method": "HANDLINE",
+    "agent": "WATER"
+  }
+}

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query
 import asyncio
+import logging
 from uuid import uuid4
 from schemas import ValidationRequest, QueueResponse
 from chunker import build_validation_contexts
@@ -31,7 +32,8 @@ async def process_context(prompt: str) -> list:
             raw_output = await call_llm(current_prompt)
             validated = validate_response(raw_output)
             return [issue.model_dump() for issue in validated.issues]
-        except Exception:
+        except Exception as e:
+            logging.exception("process_context attempt %d failed: %s", retries + 1, e)
             retries += 1
             if retries > MAX_RETRIES:
                 return []

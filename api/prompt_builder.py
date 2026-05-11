@@ -42,5 +42,5 @@ def build_prompt(context: ValidationContext) -> str:
 
 ### INSTRUCTIONS:
 Analyze the input above. Identify any fields in the primary or related objects that contradict the user comments or narratives.
-Provide proposed fixes in the 'proposed_value' field with the corrected value, and set 'original_value' to the field's current value.
+Provide the corrected value as a string in the 'suggested_correction' field.
 """

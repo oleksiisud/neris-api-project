@@ -29,7 +29,7 @@ def build_validation_contexts(doc: Dict[str, Any]) -> List[ValidationContext]:
         )
     )
 
-    if "fire_detail" in doc:
+    if doc.get("fire_detail"):
         fire_detail = doc.get("fire_detail") or {}
         narratives = {
             "narratives": {
@@ -52,7 +52,7 @@ def build_validation_contexts(doc: Dict[str, Any]) -> List[ValidationContext]:
             )
         )
 
-    if "hazsit_detail" in doc:
+    if doc.get("hazsit_detail"):
         hazsit_detail = doc.get("hazsit_detail") or {}
         contexts.append(
             ValidationContext(
@@ -70,7 +70,7 @@ def build_validation_contexts(doc: Dict[str, Any]) -> List[ValidationContext]:
             )
         )
 
-    if "medical_details" in doc:
+    if doc.get("medical_details"):
         medical_details = doc.get("medical_details") or []
         contexts.append(
             ValidationContext(
@@ -87,7 +87,7 @@ def build_validation_contexts(doc: Dict[str, Any]) -> List[ValidationContext]:
             )
         )
 
-    if "dispatch" in doc:
+    if doc.get("dispatch"):
         dispatch = doc.get("dispatch") or {}
         unit_responses = dispatch.get("unit_responses") or []
         contexts.append(

@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   redis:
     image: redis:7-alpine
@@ -24,11 +22,13 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JOB_TIMEOUT=600
+      - LLM_URL=http://llm:8080/v1/chat/completions
     depends_on:
       redis:
         condition: service_healthy
     volumes:
       - ./api:/app
+      - ./llm/grammars:/app/grammars
     networks:
       - narrative-network
     restart: unless-stopped
@@ -40,7 +40,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - LLM_URL=http://llm:8080/completion
+      - LLM_URL=http://llm:8080/v1/chat/completions
       - MAX_RETRIES=2
       - REQUEST_TIMEOUT=120
       - JOB_TIMEOUT=600
@@ -51,6 +51,7 @@ services:
         condition: service_healthy
     volumes:
       - ./worker:/app
+      - ./llm/grammars:/app/grammars
     networks:
       - narrative-network
     restart: unless-stopped
@@ -62,8 +63,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '8'
-          memory: 16G
+          cpus: '4'
+          memory: 8G
     ports:
       - "8080:8080"
     volumes:

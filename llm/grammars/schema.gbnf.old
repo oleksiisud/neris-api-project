@@ -1,0 +1,27 @@
+root ::= root-object
+root-object ::= "{" ws "\"changes\"" ws ":" ws array ws "}"
+array ::= "[" ws (change (ws "," ws change)*)? ws "]"
+
+change ::= "{" ws
+    "\"field_path\"" ws ":" ws string ws "," ws
+    "\"original_value\"" ws ":" ws value ws "," ws
+    "\"comment\"" ws ":" ws string ws "," ws
+    "\"proposed_value\"" ws ":" ws value ws "," ws
+    "\"confidence_scores\"" ws ":" ws confidence_scores_obj ws
+"}"
+
+# Any JSON value: string, number, object, array, bool, null
+value ::= string | number | object | array-val | "true" | "false" | "null"
+array-val ::= "[" ws (value (ws "," ws value)*)? ws "]"
+object ::= "{" ws (string ws ":" ws value (ws "," ws string ws ":" ws value)*)? ws "}"
+
+confidence_scores_obj ::= "{" ws
+    "\"incorrectness_confidence\"" ws ":" ws number ws "," ws
+    "\"fix_confidence\"" ws ":" ws number ws "," ws
+    "\"narrative_clarity\"" ws ":" ws number ws
+"}"
+
+string ::= "\"" char* "\""
+char ::= [^"\\\x00-\x1F] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4})
+number ::= "-"? [0-9]+ ("." [0-9]+)?
+ws ::= [ \t\n\r]*

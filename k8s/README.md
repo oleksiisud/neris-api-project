@@ -9,7 +9,6 @@ k8s/
 ├── namespace.yaml
 ├── api-deployment.yaml
 ├── api-service.yaml
-├── worker-deployment.yaml
 ├── llm-pvc.yaml
 ├── llm-deployment.yaml          (CPU-based LLM inference)
 ├── llm-deployment-gpu.yaml       (GPU-accelerated LLM inference)
@@ -133,7 +132,6 @@ Recommended autoscaling:
 | Component | Strategy         |
 | --------- | ---------------- |
 | API       | CPU utilization  |
-| Workers   | Queue depth      |
 | LLM       | Manual initially |
 
 ## Secrets

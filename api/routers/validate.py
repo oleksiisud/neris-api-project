@@ -3,6 +3,7 @@ import json
 import logging
 from schemas import ValidationRequest
 from semantic_validation.retrieval_orchestrator import RetrievalPlannerOrchestrator
+from semantic_validation.response_fixer import fix_validation_response
 from llm_client import call_llm
 
 router = APIRouter()
@@ -27,11 +28,12 @@ async def validate(request: ValidationRequest):
 
         logging.info("Starting Stage 2: Focused Validation")
         validation_raw = await call_llm(validation_prompt, grammar_name="validation_output")
-        
-        # Parse final structured output
+
         results = orchestrator.parse_validation_output(validation_raw)
+
+        fixed_results = fix_validation_response(results.model_dump())
         
-        return results.model_dump()
+        return fixed_results
 
     except Exception as e:
         logging.exception("Validation pipeline failed")

@@ -26,8 +26,13 @@ api/
 │   ├── field_extractor.py       # Deterministic nested field retrieval
 │   ├── planner_prompt_builder.py # Stage 1 prompt logic
 │   ├── validation_prompt_builder.py # Stage 2 prompt logic
+│   ├── validation_context_builder.py # Context assembly for Stage 2
+│   ├── response_fixer.py        # Post-processing for validation results
 │   ├── models.py                # Pydantic models for planner/validator
 │   └── planner_validator.py     # Safety layer for requested fields
+├── grammars/
+│   ├── planner_output.gbnf      # Stage 1 grammar
+│   └── validation_output.gbnf   # Stage 2 grammar
 ├── schemas.py                   # Global API schemas
 ├── config.py                   # Environment configuration
 └── requirements.txt

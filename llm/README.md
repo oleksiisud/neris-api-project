@@ -19,11 +19,13 @@ inside the inference runtime.
 ```text
 llm/
 ├── Dockerfile
-├── start.sh
+├── start.sh              (CPU-optimized)
+├── start-gpu.sh          (GPU-accelerated)
 ├── grammars/
 │   └── schema.gbnf
 └── models/
-    └── model.gguf   ← you must place your GGUF file here before running
+    └── llama-neris.Q4_K_M.gguf   ← the optimized project model
+    └── model.gguf                ← generic filename for custom models
 ```
 
 ## Model
@@ -55,17 +57,53 @@ and place the file at `llm/models/model.gguf`.
 
 ## llama.cpp Startup
 
-The `start.sh` script runs:
+### CPU-based (Default - start.sh)
 
 ```bash
 ./llama.cpp/build/bin/llama-server \
   -m ./models/model.gguf \
   -c 4096 \
-  -t 4 \
+  -t 8 \
+  --cache-type-k q4_0 \
+  --cache-type-v q4_0 \
+  --cont-batching \
+  -ub 512 \
+  -b 512 \
+  --host 0.0.0.0 \
+  --port 8080
+```
+
+Use this for CPU-optimized instances (c7i, m7i, etc.). Inference speed: ~100-300ms per token depending on model size.
+
+### GPU-accelerated (start-gpu.sh)
+
+```bash
+./llama.cpp/build/bin/llama-server \
+  -m ./models/model.gguf \
+  -c 4096 \
+  -t 8 \
+  --cache-type-k q4_0 \
+  --cache-type-v q4_0 \
+  --cont-batching \
+  -ub 512 \
+  -b 512 \
   --host 0.0.0.0 \
   --port 8080 \
-  --grammar-file ./grammars/schema.gbnf
+  -ngl 35 \
+  -ngpu 1
 ```
+
+**Key GPU-specific flags:**
+- `-ngl 35`: Offload 35 layers to GPU (adjust based on model and GPU memory)
+- `-ngpu 1`: Use 1 GPU (for multi-GPU systems, increase as needed)
+
+Use this for GPU-accelerated instances (g4dn with NVIDIA T4 GPUs). Inference speed: ~20-50ms per token (3-5x faster).
+
+**Prerequisites for GPU:**
+- llama.cpp compiled with CUDA support
+- NVIDIA GPU drivers installed
+- CUDA toolkit installed
+- Sufficient GPU memory (~8GB+ for T4 with Q4 quantized models)
 
 ## Grammar-Constrained Decoding
 
@@ -74,10 +112,56 @@ Grammar decoding ensures:
 - predictable outputs
 - fewer malformed generations
 
-The grammar file is located at:
+The grammar files are located at:
 
 ```text
-grammars/schema.gbnf
+grammars/
+├── planner_output.gbnf      # Stage 1: Field identification
+├── validation_output.gbnf   # Stage 2: Consistency checking
+└── schema.gbnf              # Generic validation schema
+```
+
+## Docker Build Options
+
+### CPU Build (Default)
+
+Build the standard CPU-optimized image:
+
+```bash
+docker build -t neris-llm:latest -f llm/Dockerfile ./llm
+```
+
+Run with CPU startup script:
+```bash
+docker run -v ./models:/app/models neris-llm:latest ./start.sh
+```
+
+### GPU Build (NVIDIA CUDA)
+
+Build the GPU-accelerated image with CUDA support:
+
+```bash
+docker build -t neris-llm:gpu -f llm/Dockerfile.gpu ./llm
+```
+
+Run with GPU startup script (ensure NVIDIA Docker runtime is available):
+```bash
+docker run --gpus all -v ./models:/app/models neris-llm:gpu ./start-gpu.sh
+```
+
+For docker-compose, add GPU support:
+```yaml
+services:
+  llm:
+    image: neris-llm:gpu
+    build:
+      context: ./llm
+      dockerfile: Dockerfile.gpu
+    volumes:
+      - ./llm/models:/app/models:ro
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
 ```
 
 ## Internal Networking

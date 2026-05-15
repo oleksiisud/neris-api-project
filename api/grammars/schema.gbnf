@@ -1,0 +1,17 @@
+root   ::= audit
+audit  ::= "{" ws "\"status\"" ws ":" ws status ws "," ws "\"issues\"" ws ":" ws issues ws "}"
+
+status ::= "\"VALID\"" | "\"INVALID\""
+
+issues ::= "[]" | "[" ws issue ("," ws issue)* ws "]"
+
+issue  ::= "{" ws "\"field_path\"" ws ":" ws string ws "," ws "\"current_value\"" ws ":" ws value  ws "," ws "\"narrative_source\"" ws ":" ws string ws "," ws "\"narrative_excerpt\"" ws ":" ws string ws "," ws "\"severity\"" ws ":" ws severity ws "," ws "\"suggested_correction\"" ws ":" ws string ws "}"
+
+severity ::= "\"HIGH\"" | "\"MEDIUM\"" | "\"LOW\""
+
+value ::= string | number | "true" | "false" | "null" | array | object
+array ::= "[]" | "[" ws value ("," ws value)* ws "]"
+object ::= "{}" | "{" ws string ws ":" ws value ("," ws string ws ":" ws value)* ws "}"
+number ::= "-"? [0-9]+ ("." [0-9]+)?
+string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4}))* "\""
+ws ::= [ \t\n]*

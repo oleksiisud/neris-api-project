@@ -5,8 +5,8 @@ metadata:
   namespace: neris-ai
 spec:
   accessModes:
-    - ReadOnlyMany
-  storageClassName: efs-sc
+    - ReadWriteOnce
+  storageClassName: gp2
   resources:
     requests:
       storage: 10Gi

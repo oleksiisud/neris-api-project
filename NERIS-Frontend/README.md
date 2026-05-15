@@ -4,14 +4,16 @@ React/Vite interface for the NERIS JSON Schema Validation pipeline.
 
 ## Architecture
 
-```
-Client → API Service → Validation Layer (Pydantic/NERIS API)
-                              ↓ (valid)
-                       Prompt Builder/Chunker
-                              ↓
-                       Llama 3.2 3B (llama.cpp, Docker, AWS EC2)
-                              ↓
-                       JSON Enforcer → Response with proposed changes
+```text
+Client → FastAPI (API Service)
+           ↓
+    Retrieval Orchestrator (Stage 1: Planner LLM)
+           ↓
+    Python: Deterministic Field Extraction
+           ↓
+    Focused Validation (Stage 2: Validator LLM)
+           ↓
+Structured Results with Proposed Changes
 ```
 
 ## Setup

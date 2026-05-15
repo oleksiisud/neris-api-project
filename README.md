@@ -39,8 +39,10 @@ Structured Validation Results
 
 | Directory | Purpose |
 | --- | --- |
-| `/api` | FastAPI service, stage orchestration, and deterministic extraction. |
-| `/llm` | llama.cpp inference runtime with optimized GBNF grammars. |
+| `/api` | FastAPI service, two-stage orchestration, and field extraction. |
+| `/llm` | llama.cpp inference runtime with GGUF models and grammars. |
+| `/NERIS-Frontend` | React/Vite web interface for document validation. |
+| `/k8s` | Kubernetes manifests for AWS EKS deployment (CPU/GPU). |
 | `/test_data` | Sample NERIS records for validation testing. |
 
 ## Quick Start (Local Docker)
@@ -51,6 +53,14 @@ Structured Validation Results
    docker compose up --build
    ```
 3. The API is available at `http://localhost:8000/validate`.
+4. The Frontend is available at `http://localhost:5173`.
+
+## Frontend Interface
+
+The system includes a premium React-based dashboard for interacting with the validation API. It features:
+- Real-time JSON syntax highlighting.
+- Detailed validation reports with confidence scores.
+- Configurable API endpoints and timeouts.
 
 ## Requirements
 - Docker & Docker Compose

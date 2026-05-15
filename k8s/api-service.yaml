@@ -3,8 +3,10 @@ kind: Service
 metadata:
   name: validation-api-service
   namespace: neris-ai
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "300"
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: validation-api
   ports:

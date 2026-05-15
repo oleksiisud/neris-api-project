@@ -1,13 +1,11 @@
-# DEPRECEATED - Worker Service
+# DEPRECATED - Legacy Worker Service
 
-The worker service processes queued validation jobs.
+> [!WARNING]
+> This component is **LEGACY** and is no longer part of the primary NERIS validation pipeline.
+> The system has transitioned to a high-performance, synchronous FastAPI architecture. 
+> This directory is preserved for historical reference only.
 
-Responsibilities:
-- consume Redis jobs
-- call llama.cpp
-- validate JSON output
-- retry malformed outputs
-- aggregate results
+The legacy worker service processed queued validation jobs using Redis.
 
 ## Directory Structure
 

@@ -39,14 +39,19 @@ TASK:
 2. If the data is inconsistent with the text, propose a correction.
 3. Provide confidence scores for each finding.
 
+IMPORTANT: 
+- If original_value or proposed_value is an array or object, output it as proper JSON (not escaped).
+- Example: "original_value": [{{"type": "LAWENFORCE"}}] NOT "original_value": "[{{\\"type\\": \\"LAWENFORCE\\"}}]"
+- Strings should be quoted, objects/arrays should be unquoted JSON structures.
+
 OUTPUT FORMAT (JSON ONLY):
 {{
   "changes": [
     {{
       "field_path": "path.to.field",
-      "original_value": "current value",
+      "original_value": "current value or {{object}} or [array]",
       "comment": "explanation of the mismatch",
-      "proposed_value": "corrected value",
+      "proposed_value": "corrected value or {{object}} or [array]",
       "confidence_scores": {{
         "incorrectness_confidence": 0.0-1.0,
         "fix_confidence": 0.0-1.0,

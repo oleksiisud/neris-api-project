@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -14,7 +14,8 @@ RUN git clone --depth 1 https://github.com/ggerganov/llama.cpp.git
 
 WORKDIR /app/llama.cpp/build
 
-RUN cmake .. -DLLAMA_CURL=ON && \
+# Build with CUDA support
+RUN cmake .. -DLLAMA_CUDA=ON -DLLAMA_CURL=ON && \
     cmake --build . --config Release -j4
 
 COPY grammars /app/grammars
@@ -25,6 +26,5 @@ RUN chmod +x /app/start.sh /app/start-gpu.sh
 WORKDIR /app
 EXPOSE 8080
 
-# Use start.sh for CPU (default)
-# Use Dockerfile.gpu for GPU-accelerated builds with CUDA support
-CMD ["./start.sh"]
+# Default to GPU startup script
+CMD ["./start-gpu.sh"]

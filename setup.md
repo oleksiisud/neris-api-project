@@ -186,7 +186,7 @@ eksctl delete cluster --name neris-narrative-validation --region us-east-1
 
 #### 1. Downsize the node type (saves ~$130–160/month)
 
-The K8s `llm-deployment.yaml` only *requests* 4 CPU / 8Gi, not 8 CPU / 16Gi. A `c7i.xlarge` (4 vCPU, 8 GiB) is exactly right and costs roughly half as much as a `c7i.2xlarge`.
+The K8s `llm-deployment.yaml` only *requests* 2 CPU / 6Gi, not 8 CPU / 16Gi. A `c7i.xlarge` (4 vCPU, 8 GiB) is exactly right and costs roughly half as much as a `c7i.2xlarge`.
 
 Change `--node-type c7i.2xlarge` → `--node-type c7i.xlarge` in the `eksctl create` commands above.
 
@@ -207,9 +207,9 @@ eksctl create nodegroup \
 
 Combined with the right-sized instance: **≈ $36–50/month for EC2** instead of $240–320.
 
-#### 3. Replace EFS with EBS for model storage (saves ~$5–15/month)
+#### 3. Use GP3 for model storage (saves ~$5–15/month)
 
-The `llm-pvc.yaml` uses `storageClassName: efs-sc` (ReadOnlyMany). A single-replica LLM pod only needs `ReadWriteOnce`, so EBS (`gp3`) is cheaper and lower-latency:
+The `llm-pvc.yaml` currently uses `gp2`. Upgrading to `gp3` is cheaper and offers better performance:
 
 ```yaml
 # k8s/llm-pvc.yaml

@@ -1,0 +1,4 @@
+root   ::= "{" ws "\"fields_needed\"" ws ":" ws list ws "," ws "\"reasoning_focus\"" ws ":" ws list "}"
+list   ::= "[" ws (string ("," ws string)*)? ws "]"
+string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4}))* "\""
+ws     ::= [ \t\n]*

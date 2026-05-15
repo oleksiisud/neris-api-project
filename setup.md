@@ -19,7 +19,7 @@ Provide your Access Key ID, Secret Access Key, default region (e.g., `us-east-1`
 
 ## 2. Provision Cluster & Node Groups
 
-### Option A: Create a New Cluster
+### Option A: Create a New Cluster (CPU-based)
 Use `eksctl` to provision a completely new cluster with the necessary compute-optimized instances for CPU-bound LLM inference:
 
 ```bash
@@ -35,7 +35,29 @@ eksctl create cluster \
 ```
 *Note: This process may take 15-20 minutes.*
 
-### Option B: Add to an Existing Cluster
+### Option A-GPU: Create a New Cluster (GPU-based)
+For faster inference with GPU acceleration, use `g4dn` instances (NVIDIA T4 GPUs):
+
+```bash
+eksctl create cluster \
+  --name neris-narrative-validation \
+  --region us-east-1 \
+  --nodegroup-name gpu-workers \
+  --node-type g4dn.xlarge \
+  --nodes 2 \
+  --nodes-min 1 \
+  --nodes-max 4 \
+  --managed
+```
+
+After cluster creation, install the NVIDIA device plugin for GPU support:
+```bash
+kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml
+```
+
+*Note: GPU cluster setup may take 20-25 minutes. Ensure you have GPU quota in your AWS account.*
+
+### Option B: Add to an Existing Cluster (CPU node group)
 If you already have an EKS cluster running, you only need to add the `cpu-workers` node group and update your local context.
 
 1. Create the new compute node group:
@@ -56,6 +78,24 @@ eksctl create nodegroup \
 aws eks update-kubeconfig --region us-east-1 --name <your-existing-cluster-name>
 ```
 
+### Option B-GPU: Add GPU Node Group to Existing Cluster
+To add GPU capability to an existing cluster:
+
+```bash
+eksctl create nodegroup \
+  --cluster <your-existing-cluster-name> \
+  --region us-east-1 \
+  --name gpu-workers \
+  --node-type g4dn.xlarge \
+  --nodes 1 \
+  --nodes-min 1 \
+  --nodes-max 4 \
+  --managed
+
+# Install NVIDIA device plugin
+kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/master/nvidia-device-plugin.yml
+```
+
 ## 3. Build and Push Docker Images
 Authenticate Docker with Amazon Elastic Container Registry (ECR):
 
@@ -63,11 +103,10 @@ Authenticate Docker with Amazon Elastic Container Registry (ECR):
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-Build the images for the `api`, `worker`, and `llm` services:
+Build the images for the `api` and `llm` services:
 
 ```bash
 docker build -t neris-api ./api
-docker build -t neris-worker ./worker
 docker build -t neris-llm ./llm
 ```
 
@@ -76,46 +115,63 @@ Tag and push the images to your ECR repositories:
 ```bash
 docker tag neris-api:latest <your-account-id>.dkr.ecr.us-east-1.amazonaws.com/neris-api:latest
 docker push <your-account-id>.dkr.ecr.us-east-1.amazonaws.com/neris-api:latest
-# Repeat for worker and llm
+# Repeat for llm
 ```
 
-## 4. Install Dependencies via Helm
-Deploy standard infrastructure components like Redis (required for async queue mode). Alternatively, use AWS ElastiCache for production:
+## 4. Deploy Kubernetes Manifests
 
-```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install redis bitnami/redis --set architecture=standalone
-```
-
-## 5. Deploy Kubernetes Manifests
-Apply the application manifests from the `k8s/` directory. Be sure to update the image paths in the YAML files to point to your ECR repositories.
+### CPU Deployment
+Apply the CPU-based manifests from the `k8s/` directory. Be sure to update the image paths in the YAML files to point to your ECR repositories.
 
 ```bash
 kubectl apply -f k8s/
+```
+
+### GPU Deployment
+For GPU-accelerated deployment, use the GPU-specific manifest:
+
+```bash
+kubectl apply -f k8s/llm-deployment-gpu.yaml
 ```
 
 Verify that all pods are running:
 
 ```bash
 kubectl get pods
+kubectl get nodes -L nvidia.com/gpu
 ```
 
 ---
 
 ## Infrastructure Costs
 
-The current setup utilizes compute-optimized instances to handle CPU-based inference effectively. 
+The setup supports both CPU-based and GPU-based inference. Choose based on your performance and budget requirements.
 
-**Biggest Cost Drivers in Your Setup**
-Estimated monthly baseline if left running (even when idle):
+### CPU-based Setup
+Utilizes compute-optimized instances for CPU-bound LLM inference.
+
+**Estimated monthly baseline if left running (even when idle):**
 
 | Service | Approx Monthly |
 |---------|----------------|
 | **EKS control plane** | ~$72 |
 | **2x c7i.2xlarge** | ~$240–320 |
-| **ElastiCache / Redis** | ~$15–40 |
 | **NAT/VPC** | ~$5–40 |
-| **Total** | **~$330–430/month** |
+| **Total** | **~$317–432/month** |
+
+### GPU-based Setup (g4dn.xlarge with NVIDIA T4)
+GPU acceleration provides 3-5x faster inference but at higher cost.
+
+**Estimated monthly baseline if left running (even when idle):**
+
+| Service | Approx Monthly |
+|---------|----------------|
+| **EKS control plane** | ~$72 |
+| **2x g4dn.xlarge (with T4 GPU)** | ~$700–840 |
+| **NAT/VPC** | ~$5–40 |
+| **Total** | **~$777–952/month** |
+
+**Cost Comparison:** GPU setup is ~2.5-3x more expensive but delivers significantly faster inference for real-time applications.
 
 To avoid unnecessary costs, remember to scale down the node group or delete the cluster when not in use:
 ```bash
@@ -126,7 +182,9 @@ eksctl delete cluster --name neris-narrative-validation --region us-east-1
 
 ## Cost Reduction Strategies
 
-### 1. Downsize the node type (saves ~$130–160/month)
+### CPU Setup Cost Optimization
+
+#### 1. Downsize the node type (saves ~$130–160/month)
 
 The K8s `llm-deployment.yaml` only *requests* 4 CPU / 8Gi, not 8 CPU / 16Gi. A `c7i.xlarge` (4 vCPU, 8 GiB) is exactly right and costs roughly half as much as a `c7i.2xlarge`.
 
@@ -134,7 +192,7 @@ Change `--node-type c7i.2xlarge` → `--node-type c7i.xlarge` in the `eksctl cre
 
 New estimate: **2x c7i.xlarge ≈ $120–160/month**
 
-### 2. Use Spot instances (saves ~60–70% on EC2)
+#### 2. Use Spot instances (saves ~60–70% on EC2)
 
 Add `--spot` to the eksctl node group to bid on spare capacity. Spot interruptions are rare for c7i and llama.cpp restarts in seconds.
 
@@ -149,19 +207,7 @@ eksctl create nodegroup \
 
 Combined with the right-sized instance: **≈ $36–50/month for EC2** instead of $240–320.
 
-### 3. Self-host Redis inside the cluster (saves ~$15–40/month)
-
-The Helm chart already installs Redis as a pod. Skip ElastiCache entirely for non-production use — the in-cluster Redis is sufficient:
-
-```bash
-helm install redis bitnami/redis \
-  --set architecture=standalone \
-  --set auth.enabled=false
-```
-
-Remove any ElastiCache terraform/CDK resources. This alone eliminates the $15–40 line item.
-
-### 4. Replace EFS with EBS for model storage (saves ~$5–15/month)
+#### 3. Replace EFS with EBS for model storage (saves ~$5–15/month)
 
 The `llm-pvc.yaml` uses `storageClassName: efs-sc` (ReadOnlyMany). A single-replica LLM pod only needs `ReadWriteOnce`, so EBS (`gp3`) is cheaper and lower-latency:
 
@@ -176,23 +222,77 @@ spec:
       storage: 10Gi
 ```
 
-### 5. Scale to zero when the queue is empty (eliminates idle EC2 cost)
+### GPU Setup Cost Optimization
 
-Install [KEDA](https://keda.sh/) and add a `ScaledObject` that watches the `validation` Redis list. When the queue depth is 0, KEDA scales the worker and LLM deployments to 0 replicas — the node group autoscaler then terminates the nodes, leaving only the $72 EKS control plane running.
+#### 1. Use GPU Spot instances (saves ~50–60% on GPU costs)
 
 ```bash
-helm repo add kedacore https://kedacore.github.io/charts
-helm install keda kedacore/keda --namespace keda --create-namespace
+eksctl create nodegroup \
+  --cluster neris-narrative-validation \
+  --name gpu-workers-spot \
+  --node-type g4dn.xlarge \
+  --nodes 1 --nodes-min 1 --nodes-max 3 \
+  --managed --spot
 ```
 
-### Revised cost estimate
+New estimate: **1–2x g4dn.xlarge (Spot) ≈ $350–420/month** instead of $700–840.
+
+#### 2. Use g4dn.12xlarge for batch processing (cost-effective at scale)
+
+For batch inference workloads, larger instances with multiple GPUs offer better per-GPU cost:
+
+```bash
+eksctl create nodegroup \
+  --cluster neris-narrative-validation \
+  --name gpu-workers-batch \
+  --node-type g4dn.12xlarge \
+  --nodes 1 --nodes-min 1 --nodes-max 2 \
+  --managed
+```
+
+Note: Requires updating `llm-deployment-gpu.yaml` to request multiple GPUs.
+
+#### 3. Combine CPU and GPU nodes (hybrid approach)
+
+Keep CPU nodes for non-intensive tasks and scale GPU nodes only when needed:
+
+```bash
+# Create CPU node group (always-on, low-cost)
+eksctl create nodegroup \
+  --cluster neris-narrative-validation \
+  --name cpu-workers \
+  --node-type c7i.xlarge \
+  --nodes 1 --nodes-min 1 --nodes-max 2 \
+  --managed
+
+# Create GPU node group (scale up on-demand)
+eksctl create nodegroup \
+  --cluster neris-narrative-validation \
+  --name gpu-workers \
+  --node-type g4dn.xlarge \
+  --nodes 0 --nodes-min 0 --nodes-max 2 \
+  --managed
+```
+
+### Revised cost estimates
+
+#### CPU Setup
 
 | Strategy applied | Approx Monthly |
 |-----------------|----------------|
 | Downsize to c7i.xlarge + Spot | ~$36–50 |
-| Self-hosted Redis (no ElastiCache) | $0 |
 | EBS instead of EFS | ~$1–2 |
 | EKS control plane | ~$72 |
 | NAT/VPC | ~$5–15 |
-| **Total (always-on)** | **~$115–140/month** |
-| **Total (KEDA scale-to-zero, light usage)** | **~$75–85/month** |
+| **Total (always-on)** | **~$114–139/month** |
+
+#### GPU Setup
+
+| Strategy applied | Approx Monthly |
+|-----------------|----------------|
+| 1x g4dn.xlarge (Spot) | ~$175–210 |
+| CPU worker node (c7i.xlarge) | ~$60–80 |
+| EBS storage | ~$1–2 |
+| EKS control plane | ~$72 |
+| NAT/VPC | ~$5–15 |
+| **Total (always-on hybrid)** | **~$313–379/month** |

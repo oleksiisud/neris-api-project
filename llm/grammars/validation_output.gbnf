@@ -1,0 +1,7 @@
+root   ::= "{" ws "\"changes\"" ws ":" ws "[" ws (change ("," ws change)*)? ws "]" ws "}"
+change ::= "{" ws "\"field_path\"" ws ":" ws string ws "," ws "\"original_value\"" ws ":" ws value ws "," ws "\"comment\"" ws ":" ws string ws "," ws "\"proposed_value\"" ws ":" ws value ws "," ws "\"confidence_scores\"" ws ":" ws scores ws "}"
+scores ::= "{" ws "\"incorrectness_confidence\"" ws ":" ws number ws "," ws "\"fix_confidence\"" ws ":" ws number ws "," ws "\"narrative_clarity\"" ws ":" ws number ws "}"
+value  ::= string | number | "true" | "false" | "null" | "[]" | "{}"
+number ::= "-"? [0-9]+ ("." [0-9]+)?
+string ::= "\"" ([^"\\] | "\\" (["\\/bfnrt] | "u" [0-9a-fA-F]{4}))* "\""
+ws     ::= [ \t\n]*

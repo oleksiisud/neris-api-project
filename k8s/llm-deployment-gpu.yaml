@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llm-deployment-gpu
+  namespace: neris-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: llm-gpu
+  template:
+    metadata:
+      labels:
+        app: llm-gpu
+    spec:
+      # Node affinity to schedule on GPU nodes
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nvidia.com/gpu
+                operator: Exists
+      containers:
+      - name: llama-cpp
+        image: 103524369203.dkr.ecr.us-east-1.amazonaws.com/neris-llm:latest
+        ports:
+        - containerPort: 8080
+        env:
+        # Enable GPU support in llama.cpp
+        - name: CUDA_VISIBLE_DEVICES
+          value: "0"
+        - name: LLAMA_CPP_N_GPU_LAYERS
+          value: "35"
+        resources:
+          requests:
+            cpu: "2"
+            memory: "6Gi"
+            nvidia.com/gpu: "1"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /app/models
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          failureThreshold: 3
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: llm-model-pvc

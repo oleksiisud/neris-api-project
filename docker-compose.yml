@@ -1,17 +1,4 @@
 services:
-  redis:
-    image: redis:7-alpine
-    container_name: narrative-redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    networks:
-      - narrative-network
-
   api:
     build:
       context: ./api
@@ -19,13 +6,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - JOB_TIMEOUT=600
+      - REQUEST_TIMEOUT=120
       - LLM_URL=http://llm:8080/v1/chat/completions
-    depends_on:
-      redis:
-        condition: service_healthy
     volumes:
       - ./api:/app
       - ./llm/grammars:/app/grammars
@@ -33,28 +15,6 @@ services:
       - narrative-network
     restart: unless-stopped
 
-  worker:
-    build:
-      context: ./worker
-    container_name: narrative-worker
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - LLM_URL=http://llm:8080/v1/chat/completions
-      - MAX_RETRIES=2
-      - REQUEST_TIMEOUT=120
-      - JOB_TIMEOUT=600
-    depends_on:
-      redis:
-        condition: service_healthy
-      llm:
-        condition: service_healthy
-    volumes:
-      - ./worker:/app
-      - ./llm/grammars:/app/grammars
-    networks:
-      - narrative-network
-    restart: unless-stopped
 
   llm:
     build:

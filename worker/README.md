@@ -1,4 +1,4 @@
-# Worker Service
+# DEPRECEATED - Worker Service
 
 The worker service processes queued validation jobs.
 

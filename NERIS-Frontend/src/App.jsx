@@ -8,9 +8,9 @@ import ConfigModal from './components/ConfigModal.jsx'
 import { useConsoleLog } from './hooks/useConsoleLog.js'
 
 const DEFAULT_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  baseUrl: import.meta.env.NERIS_API || import.meta.env.VITE_API_BASE_URL,
   endpoint: '/validate',
-  timeout: 30000,
+  timeout: 300000,
 }
 
 const styles = {

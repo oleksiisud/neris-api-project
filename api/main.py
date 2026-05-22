@@ -6,10 +6,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://neris-api-proj.vercel.app"],
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["POST", "GET", "OPTIONS"],
-    allow_headers=["Accept", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

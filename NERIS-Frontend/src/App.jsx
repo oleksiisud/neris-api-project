@@ -8,7 +8,7 @@ import ConfigModal from './components/ConfigModal.jsx'
 import { useConsoleLog } from './hooks/useConsoleLog.js'
 
 const DEFAULT_CONFIG = {
-  baseUrl: import.meta.env.NERIS_API || import.meta.env.VITE_API_BASE_URL,
+  baseUrl: import.meta.env.NERIS_API,
   endpoint: '/validate',
   timeout: 300000,
 }

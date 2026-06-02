@@ -133,6 +133,7 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/neris-llm:latest
 Apply the CPU-based manifests from the `k8s/` directory. Be sure to update the image paths in the YAML files to point to your ECR repositories.
 
 ```bash
+kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/
 ```
 
@@ -143,10 +144,10 @@ To do this, patch the deployment to keep the container running under `sleep` (wi
 
 ```bash
 # 1. Patch the deployment to run sleep infinity and disable probes
-kubectl patch deployment llm-deployment -n neris-ai --patch '{"spec":{"template":{"spec":{"containers":[{"name":"llama-cpp","command":["sleep","infinity"],"livenessProbe":null,"readinessProbe":null}]}}}}'
+kubectl patch deployment llm-deployment -n neris-ai --patch '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"llama-cpp\",\"command\":[\"sleep\",\"infinity\"],\"livenessProbe\":null,\"readinessProbe\":null}]}}}}'
 
 # 2. Patch volume mount to make it writeable (not read-only)
-kubectl patch deployment llm-deployment -n neris-ai --patch '{"spec":{"template":{"spec":{"containers":[{"name":"llama-cpp","volumeMounts":[{"name":"model-storage","mountPath":"/app/models","readOnly":false}]}]}}}}'
+kubectl patch deployment llm-deployment -n neris-ai --patch '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"llama-cpp\",\"volumeMounts\":[{\"name\":\"model-storage\",\"mountPath\":\"/app/models\",\"readOnly\":false}]}]}}}}'
 
 # 3. Get the pod name (PowerShell syntax)
 $POD_NAME = (kubectl get pods -n neris-ai -l app=llm -o jsonpath='{.items[0].metadata.name}')
